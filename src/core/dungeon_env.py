@@ -3,7 +3,7 @@ from gymnasium import spaces
 import numpy as np
 import random
 from time import sleep
-from .config import EnvConfig as cfg
+from .config import EnvConfig as envcfg
 
 class DungeonEnv(gym.Env):
 
@@ -17,35 +17,35 @@ class DungeonEnv(gym.Env):
         )
 
     def reset(self):
-        self.grid = np.full(shape=cfg.GRID_SIZE, fill_value=cfg.LAVA, dtype=np.int32)
-        self.agent_pos = np.array(list(cfg.INITIAL_AGENT_POSITION), dtype=np.int32)
+        self.grid = np.full(shape=envcfg.GRID_SIZE, fill_value=envcfg.LAVA, dtype=np.int32)
+        self.agent_pos = np.array(list(envcfg.INITIAL_AGENT_POSITION), dtype=np.int32)
         self.carrying = np.zeros(2, dtype=np.int32)
 
         # walls
-        self.grid[5, 5:] = cfg.WALL
-        self.grid[3:8, 5] = cfg.WALL
-        self.grid[3, :5] = cfg.WALL
-        self.grid[7, :5] = cfg.WALL
-        self.grid[6, 0] = cfg.WALL
-        self.grid[4, 0] = cfg.WALL
+        self.grid[5, 5:] = envcfg.WALL
+        self.grid[3:8, 5] = envcfg.WALL
+        self.grid[3, :5] = envcfg.WALL
+        self.grid[7, :5] = envcfg.WALL
+        self.grid[6, 0] = envcfg.WALL
+        self.grid[4, 0] = envcfg.WALL
 
         # walkable
-        self.grid[1:10, 2] = cfg.WALKABLE
-        self.grid[5, 0:5] = cfg.WALKABLE
-        self.grid[4, 1:5] = cfg.WALKABLE
-        self.grid[6, 1:5] = cfg.WALKABLE
-        self.grid[9, 2:10] = cfg.WALKABLE
-        self.grid[1, 2:10] = cfg.WALKABLE
+        self.grid[1:10, 2] = envcfg.WALKABLE
+        self.grid[5, 0:5] = envcfg.WALKABLE
+        self.grid[4, 1:5] = envcfg.WALKABLE
+        self.grid[6, 1:5] = envcfg.WALKABLE
+        self.grid[9, 2:10] = envcfg.WALKABLE
+        self.grid[1, 2:10] = envcfg.WALKABLE
 
         # agent position
-        self.grid[cfg.INITIAL_AGENT_POSITION] = cfg.AGENT
+        self.grid[envcfg.INITIAL_AGENT_POSITION] = envcfg.AGENT
 
         # keys
-        self.grid[1, 9] = cfg.KEY
-        self.grid[9, 9] = cfg.KEY
+        self.grid[1, 9] = envcfg.KEY
+        self.grid[9, 9] = envcfg.KEY
 
         # goal
-        self.grid[cfg.GOAL_POSITION] = cfg.GOAL
+        self.grid[envcfg.GOAL_POSITION] = envcfg.GOAL
 
         self.state = (
             self.agent_pos[0],
@@ -57,58 +57,58 @@ class DungeonEnv(gym.Env):
         return self.state
 
     def step(self, action):
-        if action == cfg.UP:
+        if action == envcfg.UP:
             new_pos = self.agent_pos + np.array([-1, 0])
-        elif action == cfg.DOWN:
+        elif action == envcfg.DOWN:
             new_pos = self.agent_pos + np.array([1, 0])
-        elif action == cfg.LEFT:
+        elif action == envcfg.LEFT:
             new_pos = self.agent_pos + np.array([0, -1])
-        elif action == cfg.RIGHT:
+        elif action == envcfg.RIGHT:
             new_pos = self.agent_pos + np.array([0, 1])
         else:
             raise ValueError(f"Invalid action: {action}")
 
-        new_pos = np.clip(new_pos, 0, np.array(cfg.GRID_SIZE) - 1)
+        new_pos = np.clip(new_pos, 0, np.array(envcfg.GRID_SIZE) - 1)
         new_cell = self.grid[tuple(new_pos)]
 
         reward = 0
         done = False
         terminated = False
 
-        if new_cell == cfg.WALL:
+        if new_cell == envcfg.WALL:
             reward = -0.1
 
-        elif new_cell == cfg.LAVA:
+        elif new_cell == envcfg.LAVA:
             reward = -10
             terminated = True
 
-        elif new_cell == cfg.KEY:
+        elif new_cell == envcfg.KEY:
             if self.carrying[0]:
                 self.carrying[1] = 1
             else:
                 self.carrying[0] = 1
             reward = 10
-            self.grid[tuple(self.agent_pos)] = cfg.WALKABLE
-            self.grid[tuple(new_pos)] = cfg.AGENT
+            self.grid[tuple(self.agent_pos)] = envcfg.WALKABLE
+            self.grid[tuple(new_pos)] = envcfg.AGENT
             self.agent_pos = new_pos
 
-        elif new_cell == cfg.GOAL:
+        elif new_cell == envcfg.GOAL:
             if self.carrying[0] and self.carrying[1]:
                 done = True
                 reward = 100
-                self.grid[tuple(self.agent_pos)] = cfg.WALKABLE
-                self.grid[tuple(new_pos)] = cfg.AGENT
+                self.grid[tuple(self.agent_pos)] = envcfg.WALKABLE
+                self.grid[tuple(new_pos)] = envcfg.AGENT
                 self.agent_pos = new_pos
             else:
                 reward = -1
 
-        elif new_cell == cfg.WALKABLE:
+        elif new_cell == envcfg.WALKABLE:
             reward = -0.1
-            self.grid[tuple(self.agent_pos)] = cfg.WALKABLE
-            self.grid[tuple(new_pos)] = cfg.AGENT
+            self.grid[tuple(self.agent_pos)] = envcfg.WALKABLE
+            self.grid[tuple(new_pos)] = envcfg.AGENT
             self.agent_pos = new_pos
 
-        elif new_cell == cfg.AGENT:
+        elif new_cell == envcfg.AGENT:
             reward = -1
 
         else:
@@ -127,19 +127,19 @@ class DungeonEnv(gym.Env):
         
         grid_display = np.array(self.grid, dtype=object)
 
-        for i in range(cfg.GRID_SIZE[0]):
-            for j in range(cfg.GRID_SIZE[1]):
-                if grid_display[i, j] == cfg.WALL:
+        for i in range(envcfg.GRID_SIZE[0]):
+            for j in range(envcfg.GRID_SIZE[1]):
+                if grid_display[i, j] == envcfg.WALL:
                     grid_display[i, j] = 'W'
-                elif grid_display[i, j] == cfg.WALKABLE:
+                elif grid_display[i, j] == envcfg.WALKABLE:
                     grid_display[i, j] = ' '
-                elif grid_display[i, j] == cfg.AGENT:
+                elif grid_display[i, j] == envcfg.AGENT:
                     grid_display[i, j] = 'A'
-                elif grid_display[i, j] == cfg.KEY:
+                elif grid_display[i, j] == envcfg.KEY:
                     grid_display[i, j] = 'K'
-                elif grid_display[i, j] == cfg.LAVA:
+                elif grid_display[i, j] == envcfg.LAVA:
                     grid_display[i, j] = 'L'
-                elif grid_display[i, j] == cfg.GOAL:
+                elif grid_display[i, j] == envcfg.GOAL:
                     grid_display[i, j] = 'G'
 
         ax, ay = self.agent_pos
@@ -163,7 +163,7 @@ if __name__ == "__main__":
         # action = random.choice([UP, DOWN, LEFT, RIGHT])
         
         # manual action
-        action = int(input(f"Enter action ({cfg.UP}: UP, {cfg.DOWN}: DOWN, {cfg.LEFT}: LEFT, {cfg.RIGHT}: RIGHT): "))
+        action = int(input(f"Enter action ({envcfg.UP}: UP, {envcfg.DOWN}: DOWN, {envcfg.LEFT}: LEFT, {envcfg.RIGHT}: RIGHT): "))
 
         state, reward, done, terminated, _ = env.step(action)
         print(f"Action: {action}, Reward: {reward}")

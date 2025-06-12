@@ -19,6 +19,9 @@ class Policy:
         self.epsilon_decay = epsilon_decay
         self.min_epsilon = min_epsilon
 
+        self.epsilon_history = np.zeros(cfg.MAX_EPISODES, dtype=np.float32)
+        self.current_episode = 0
+
     def get_action(self, state):
         if state not in self.q_table:
             self.q_table[state] = [0] * self.action_space_size
@@ -41,5 +44,5 @@ class Policy:
         if update_epsilon:
             self.epsilon *= self.epsilon_decay
             self.epsilon = max(self.epsilon, self.min_epsilon)
-    
-        
+            self.epsilon_history[self.current_episode] = self.epsilon
+            self.current_episode += 1

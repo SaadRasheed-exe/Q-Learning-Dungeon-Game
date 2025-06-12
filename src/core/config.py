@@ -24,8 +24,11 @@ class LearningConfig:
     EPSILON_DECAY = 0.9995
     MIN_EPSILON = 0.1
 
-    RENDERING_ENABLED = True
+    RENDERING_ENABLED = False
     ACTION_SPACE_SIZE = 4
+
+    VISUALIZE_RESULTS = True
+    SAVE_RESULTS = True
 
 
 class RenderingConfig(EnvConfig):
