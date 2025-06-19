@@ -3,8 +3,11 @@ from .visualizer import make_action_grid, make_epsilon_decay
 import pickle
 
 class Agent:
-    def __init__(self):
-        self.policy = Policy()
+    def __init__(self, q_table=None):
+        if q_table is not None:
+            self.policy = Policy(q_table=q_table)
+        else:
+            self.policy = Policy()
 
     def choose_action(self, state):
         return self.policy.get_action(state)
@@ -22,8 +25,8 @@ class Agent:
 
 
 class AgentV2:
-    def __init__(self):
-        self.policies = [Policy() for _ in range(3)]
+    def __init__(self, q_table=None):
+        self.policies = [Policy(q_table=q) for q in q_table] if q_table is not None else [Policy() for _ in range(3)]
 
     def select_policy(self, c1, c2):
         if not (c1 or c2):

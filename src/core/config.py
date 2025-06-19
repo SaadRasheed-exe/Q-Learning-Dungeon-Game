@@ -1,3 +1,6 @@
+import os
+
+
 class EnvConfig:
     GRID_SIZE = (11, 11)
     INITIAL_AGENT_POSITION = (5, 2)
@@ -34,5 +37,13 @@ class LearningConfig:
 class RenderingConfig(EnvConfig):
     CELL_SIZE = 16
     UPSCALE_FACTOR = 4
-    TICKS_PER_SECOND = 60
+    TICKS_PER_SECOND = 20
     ASSETPATH = "assets/v2-1"
+
+
+class TestConfig:
+    MAX_EPISODES = 1000
+    RENDERING_ENABLED = True
+
+    EXPERIMENT_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 
+                                 "experiments/20250619-113431")

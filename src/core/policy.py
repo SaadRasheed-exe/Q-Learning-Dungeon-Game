@@ -4,6 +4,7 @@ from .config import LearningConfig as cfg
 class Policy:
     def __init__(
             self,
+            q_table=None,
             learning_rate=cfg.LEARNING_RATE,
             discount_factor=cfg.DISCOUNT_FACTOR,
             epsilon=cfg.EPSILON,
@@ -13,9 +14,9 @@ class Policy:
         ):
         self.learning_rate = learning_rate
         self.discount_factor = discount_factor
-        self.q_table = {}
+        self.q_table = q_table if q_table is not None else {}
         self.action_space_size = action_space_size
-        self.epsilon = epsilon
+        self.epsilon = epsilon if q_table is None else 0.0 
         self.epsilon_decay = epsilon_decay
         self.min_epsilon = min_epsilon
 
