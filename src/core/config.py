@@ -43,7 +43,5 @@ class RenderingConfig(EnvConfig):
 
 class TestConfig:
     MAX_EPISODES = 1000
-    RENDERING_ENABLED = True
-
     EXPERIMENT_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 
                                  "experiments/20250619-113431")

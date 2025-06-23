@@ -24,8 +24,7 @@ def main():
 
 
     env = DungeonEnv()
-    if cfg.RENDERING_ENABLED:
-        renderer = Renderer()
+    renderer = Renderer()
 
     while True:
         state = env.reset()
@@ -36,9 +35,7 @@ def main():
             action = agent.choose_action(state)
             next_state, _, done, terminated, _ = env.step(action)
             state = next_state
-
-            if cfg.RENDERING_ENABLED:
-                renderer.draw_grid(env.grid)
+            renderer.draw_grid(env.grid)
 
 
 if __name__ == "__main__":
