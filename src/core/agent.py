@@ -1,5 +1,5 @@
 from .policy import Policy
-from .visualizer import make_action_grid, make_epsilon_decay
+# from .visualizer import visualize_policy_arrows, visualize_epsilon_decay
 import pickle
 
 class Agent:
@@ -15,10 +15,7 @@ class Agent:
     def learn(self, state, action, reward, next_state, update_epsilon):
         self.policy.update_policy(state, action, reward, next_state, update_epsilon)
     
-    def results(self, experiment_path=None):
-        make_action_grid(self.policy.q_table, experiment_path)
-        make_epsilon_decay(self.policy.epsilon_history[:self.policy.current_episode], experiment_path)
-
+    def save(self, experiment_path=None):
         if experiment_path:
             with open(f"{experiment_path}/q_table.pkl", 'wb') as f:
                 pickle.dump(self.policy.q_table, f)
@@ -49,12 +46,9 @@ class AgentV2:
         policy = self.select_policy(c1, c2)
         policy.update_policy((x, y), action, reward, (next_x, next_y), update_epsilon)
 
-    def results(self, experiment_path=None):
-        for policy in self.policies:
-            make_action_grid(policy.q_table, experiment_path)
-            make_epsilon_decay(policy.epsilon_history[:policy.current_episode], experiment_path)
-        
+    def save(self, experiment_path=None):
         if experiment_path:
             for i, policy in enumerate(self.policies):
                 with open(f"{experiment_path}/q_table_policy_{i}.pkl", 'wb') as f:
                     pickle.dump(policy.q_table, f)
+

@@ -20,8 +20,8 @@ class EnvConfig:
 
 
 class LearningConfig:
-    MAX_EPISODES = 100000
-    LEARNING_RATE = 0.01
+    MAX_EPISODES = 20000
+    LEARNING_RATE = 0.02
     DISCOUNT_FACTOR = 0.99
     EPSILON = 1.0
     EPSILON_DECAY = 0.9995
