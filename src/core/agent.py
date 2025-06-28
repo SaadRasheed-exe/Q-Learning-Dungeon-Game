@@ -1,5 +1,4 @@
 from .policy import Policy
-# from .visualizer import visualize_policy_arrows, visualize_epsilon_decay
 import pickle
 
 class Agent:

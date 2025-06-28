@@ -1,18 +1,17 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+import seaborn as sns
 from .config import EnvConfig as envcfg
 from .config import LearningConfig as lcfg
 
 def _get_next_counter(experiment_path, base_name):
-    """Helper function to get the next available counter for file naming."""
     counter = 0
     while os.path.exists(f'{experiment_path}/{base_name}_{counter}.png'):
         counter += 1
     return counter
 
 def _draw_action_arrow(x, y, action):
-    """Helper function to draw an action arrow at the specified position."""
     if action == envcfg.UP:
         plt.arrow(y + 0.5, x + 0.5, 0, -0.4, head_width=0.1, head_length=0.1, fc='blue', ec='blue')
     elif action == envcfg.DOWN:
@@ -23,7 +22,6 @@ def _draw_action_arrow(x, y, action):
         plt.arrow(y + 0.5, x + 0.5, 0.4, 0, head_width=0.1, head_length=0.1, fc='blue', ec='blue')
 
 def _setup_grid_plot(title="Policy Visualization"):
-    """Helper function to set up the basic grid plot formatting."""
     plt.xticks(np.arange(envcfg.GRID_SIZE[1] + 1), np.arange(envcfg.GRID_SIZE[1] + 1))
     plt.yticks(np.arange(envcfg.GRID_SIZE[0] + 1), np.arange(envcfg.GRID_SIZE[0] + 1))
     plt.grid()
@@ -31,24 +29,11 @@ def _setup_grid_plot(title="Policy Visualization"):
 
 
 class PolicyVisualizer:
-    """
-    A class-based approach for visualizing reinforcement learning results.
-    Provides better organization and state management for visualization tasks.
-    """
-    
     def __init__(self, experiment_path=None, show_plots=None):
-        """
-        Initialize the visualizer.
-        
-        Args:
-            experiment_path (str, optional): Base path for saving visualizations
-            show_plots (bool, optional): Whether to display plots (defaults to config setting)
-        """
         self.experiment_path = experiment_path
         self.show_plots = show_plots if show_plots is not None else lcfg.VISUALIZE_RESULTS
     
     def visualize_policy(self, q_table, suffix="", title=None):
-        """Visualize policy with automatic detection of state dimensions."""
         if not q_table:
             print("Warning: Empty Q-table provided")
             return
@@ -60,13 +45,22 @@ class PolicyVisualizer:
             self._visualize_multi_state_policy(q_table, suffix, title)
     
     def visualize_training_progress(self, epsilon_history, reward_history=None, suffix=""):
-        """Visualize training progress including epsilon decay and rewards."""
         self._visualize_epsilon_decay(epsilon_history, suffix)
         if reward_history is not None:
             self._visualize_reward_history(reward_history, suffix)
     
+    def visualize_value_heatmap(self, q_table, suffix="", title=None):
+        if not q_table:
+            print("Warning: Empty Q-table provided")
+            return
+            
+        state_sample = next(iter(q_table.keys()))
+        if len(state_sample) == 2:
+            self._visualize_simple_value_heatmap(q_table, suffix, title)
+        else:
+            self._visualize_multi_state_value_heatmap(q_table, suffix, title)
+    
     def _visualize_simple_policy(self, q_table, suffix="", title=None):
-        """Internal method for simple 2D policy visualization."""
         fig = plt.figure(figsize=(8, 8))
         
         for state, actions in q_table.items():
@@ -80,7 +74,6 @@ class PolicyVisualizer:
         self._save_and_show(fig, f"policy_simple{suffix}")
     
     def _visualize_multi_state_policy(self, q_table, suffix="", title=None):
-        """Internal method for multi-state policy visualization."""
         # Group states by condition
         state_groups = self._group_states_by_condition(q_table)
         
@@ -99,7 +92,6 @@ class PolicyVisualizer:
         self._save_and_show(fig, f"policy_multi{suffix}")
     
     def _visualize_epsilon_decay(self, epsilon_history, suffix=""):
-        """Internal method for epsilon decay visualization."""
         fig = plt.figure(figsize=(10, 6))
         plt.plot(epsilon_history, label='Epsilon Decay', color='orange', linewidth=2)
         plt.xlabel('Episodes')
@@ -111,7 +103,6 @@ class PolicyVisualizer:
         self._save_and_show(fig, f"epsilon_decay{suffix}")
     
     def _visualize_reward_history(self, reward_history, suffix="", downsample_factor=1):
-        """Internal method for reward history visualization."""
         if downsample_factor > 1:
             reward_history = reward_history[::downsample_factor]
             episodes = np.arange(len(reward_history)) * downsample_factor
@@ -121,7 +112,6 @@ class PolicyVisualizer:
         fig = plt.figure(figsize=(12, 6))
         plt.plot(episodes, reward_history, alpha=0.7, color='green', linewidth=1)
         
-        # Add moving average for better trend visualization
         if len(reward_history) > 100:
             window = min(100, len(reward_history) // 10)
             moving_avg = np.convolve(reward_history, np.ones(window)/window, mode='valid')
@@ -138,10 +128,9 @@ class PolicyVisualizer:
         self._save_and_show(fig, f"reward_history{suffix}")
     
     def _group_states_by_condition(self, q_table):
-        """Group states by their condition (e.g., key states)."""
         groups = {}
         for state, actions in q_table.items():
-            if len(state) == 4:  # Assuming (x, y, key1, key2)
+            if len(state) == 4:
                 _, _, c1, c2 = state
                 condition = f"{int(c1)}{int(c2)} keys"
             else:
@@ -153,8 +142,71 @@ class PolicyVisualizer:
         
         return groups
     
+    def _visualize_simple_value_heatmap(self, q_table, suffix="", title=None):
+        value_grid = np.zeros(envcfg.GRID_SIZE)
+        value_grid.fill(np.nan)
+        
+        for state, actions in q_table.items():
+            x, y = state
+            if 0 <= x < envcfg.GRID_SIZE[0] and 0 <= y < envcfg.GRID_SIZE[1]:
+                value_grid[x, y] = np.max(actions)
+        
+        fig, ax = plt.subplots(figsize=(10, 8))
+        
+        sns.heatmap(value_grid, 
+                    annot=True, 
+                    fmt='.2f', 
+                    cmap='viridis', 
+                    center=0,
+                    square=True,
+                    linewidths=0.5,
+                    cbar_kws={'label': 'Value Function (Max Q-value)'},
+                    ax=ax)
+        
+        ax.set_title(title or "Value Function Heatmap")
+        ax.set_xlabel("Y Coordinate")
+        ax.set_ylabel("X Coordinate")
+        ax.invert_yaxis()
+        
+        self._save_and_show(fig, f"value_heatmap{suffix}")
+    
+    def _visualize_multi_state_value_heatmap(self, q_table, suffix="", title=None):
+        state_groups = self._group_states_by_condition(q_table)
+        
+        n_conditions = len(state_groups)
+        fig, axes = plt.subplots(1, n_conditions, figsize=(6 * n_conditions, 6))
+        
+        if n_conditions == 1:
+            axes = [axes]
+        
+        for idx, (condition, states) in enumerate(state_groups.items()):
+            value_grid = np.zeros(envcfg.GRID_SIZE)
+            value_grid.fill(np.nan)
+            
+            for state, actions in states.items():
+                x, y = state[:2]
+                if 0 <= x < envcfg.GRID_SIZE[0] and 0 <= y < envcfg.GRID_SIZE[1]:
+                    value_grid[x, y] = np.max(actions)
+            
+            sns.heatmap(value_grid,
+                        annot=True,
+                        fmt='.2f',
+                        cmap='viridis',
+                        center=0,
+                        square=True,
+                        linewidths=0.5,
+                        cbar_kws={'label': 'Value Function'},
+                        ax=axes[idx])
+            
+            axes[idx].set_title(f"Value Function: {condition}")
+            axes[idx].set_xlabel("Y Coordinate")
+            axes[idx].set_ylabel("X Coordinate")
+            axes[idx].invert_yaxis()
+        
+        plt.tight_layout()
+        self._save_and_show(fig, f"multi_value_heatmap{suffix}")
+    
     def _save_and_show(self, fig, base_filename):
-        """Helper method to save and optionally show plots."""
         if self.show_plots:
             plt.show()
         
@@ -166,7 +218,6 @@ class PolicyVisualizer:
         plt.close(fig)
 
 if __name__ == "__main__":
-    # Test the visualization functions
     q_table = {
         (0, 0): [0.1, 0.2, 0.3, 0.4],
         (0, 1): [0.2, 0.1, 0.4, 0.3],
@@ -175,3 +226,4 @@ if __name__ == "__main__":
     }
     visualizer = PolicyVisualizer(experiment_path="./visualizations", show_plots=True)
     visualizer.visualize_policy(q_table)
+    visualizer.visualize_value_heatmap(q_table)

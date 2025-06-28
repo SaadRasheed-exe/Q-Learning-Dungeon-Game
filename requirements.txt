@@ -1,5 +1,6 @@
 numpy
 matplotlib
+seaborn
 gym
 torch
 pygame

@@ -8,8 +8,8 @@ from core.config import LearningConfig as cfg
 def main():
     env = DungeonEnv()
     
-    # agent = Agent()      # basic Q-learning agent
-    agent = AgentV2()      # multi-policy Q-learning agent
+    agent = Agent()      # basic Q-learning agent
+    # agent = AgentV2()      # multi-policy Q-learning agent
 
     if cfg.RENDERING_ENABLED:
         renderer = Renderer()
@@ -61,11 +61,19 @@ def main():
         if hasattr(agent, 'policies'):
             for i, policy in enumerate(agent.policies):
                 if hasattr(policy, 'q_table'):
+                    # Generate policy arrow visualization
                     visualizer.visualize_policy(policy.q_table, suffix=f"_policy_{i}", 
                                               title=f"Policy {i} ({['No Keys', 'One Key', 'Two Keys'][i]})")
+                    # Generate value function heatmap
+                    visualizer.visualize_value_heatmap(policy.q_table, suffix=f"_policy_{i}",
+                                                     title=f"Value Function {i} ({['No Keys', 'One Key', 'Two Keys'][i]})")
         elif hasattr(agent, 'policy') and hasattr(agent.policy, 'q_table'):
+            # For single policy agents
             visualizer.visualize_policy(agent.policy.q_table, suffix="_single_policy")
+            visualizer.visualize_value_heatmap(agent.policy.q_table, suffix="_single_policy", 
+                                             title="Value Function - Single Policy")
         
+        # Visualize training progress
         if epsilon_history:
             visualizer.visualize_training_progress(epsilon_history, reward_history)
     
